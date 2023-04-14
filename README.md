@@ -11,7 +11,19 @@ Here is an example of loading the Neuro module from a URL:
 ```lua
 local Neuro = loadstring(game:HttpGet("https://raw.githubusercontent.com/Zirmith/Neuro-AImbot/main/Neuro_Hook.lua"))()
 
-local neuro = Neuro.new()
+
+local neuroInstance = Neuro.new({settings = {
+    foldername = "test" -- if not name then Deafult is NeuroTrainer   
+}})
+
+-- log nearest and farthest players
+local closestPlayer, closestDistance = neuroInstance:GetNearestPlayer()
+neuroInstance:Log(string.format("Closest player: %s, distance: %.2f", closestPlayer.Name, closestDistance), "INFO")
+
+
+
+local farthestPlayer, farthestDistance = neuroInstance:GetFarthestPlayer()
+neuroInstance:Log(string.format("Farthest player: %s, distance: %.2f", farthestPlayer.Name, farthestDistance), "INFO")
 
 ```
 
