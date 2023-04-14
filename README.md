@@ -9,7 +9,7 @@ To use the Neuro module, you can either copy the code into a script in Roblox St
 Here is an example of loading the Neuro module from a URL:
 
 ```lua
-local Neuro = loadstring(game:HttpGet("https://raw.githubusercontent.com/username/repo/branch/path/to/Neuro.lua"))()
+local Neuro = loadstring(game:HttpGet("https://raw.githubusercontent.com/Zirmith/Neuro-AImbot/main/Neuro_Hook.lua"))()
 
 local neuro = Neuro.new()
 
