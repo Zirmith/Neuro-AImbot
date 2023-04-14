@@ -165,6 +165,61 @@ function Neuro:GetFarthestPlayer()
     return farthestPlayer, farthestDistance
 end
 
+function Neuro:Pathfind(destination)
+    local path = {}
+    local current = self.HumanoidRootPart.Position
+    local endPos = destination.Position
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local function IsObstacle(part)
+        return part.CanCollide == true or part.Transparency == 0 or part.Name == "Water"
+    end
+
+    local function GetSafePosition(position)
+        local rayOrigin = position + Vector3.new(0, 5, 0)
+        local rayDirection = Vector3.new(0, -10, 0)
+        local hit = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+        if hit and hit.Position.y < position.y then
+            return hit.Position
+        end
+        return position
+    end
+
+    while current ~= endPos do
+        local direction = (endPos - current).Unit
+        local magnitude = (endPos - current).Magnitude
+        local raycastResult = workspace:Raycast(current, direction * magnitude, raycastParams)
+
+        if raycastResult then
+            table.insert(path, GetSafePosition(raycastResult.Position))
+            if raycastResult.Instance.Name == "Water" then
+                table.insert(path, GetSafePosition(raycastResult.Instance.Position + Vector3.new(0, 5, 0)))
+            end
+            current = path[#path]
+        else
+            table.insert(path, endPos)
+            current = endPos
+        end
+    end
+
+    for i = 1, #path do
+        local part = workspace:FindPartOnRay(Ray.new(self.HumanoidRootPart.Position, path[i] - self.HumanoidRootPart.Position))
+        if part and IsObstacle(part) then
+            local jumpHeight = self.Humanoid.JumpHeight
+            if part.Size.y >= jumpHeight then
+                table.insert(path, i, GetSafePosition(self.HumanoidRootPart.Position + Vector3.new(0, jumpHeight + 1, 0)))
+            elseif part.Size.y >= jumpHeight / 2 then
+                table.insert(path, i, GetSafePosition(self.HumanoidRootPart.Position + Vector3.new(0, jumpHeight / 2 + 1, 0)))
+            else
+                table.remove(path, i)
+            end
+        end
+    end
+
+    return path
+end
+
 
 
 return Neuro
