@@ -220,6 +220,126 @@ function Neuro:Pathfind(destination)
     return path
 end
 
+function Neuro:GetEnemyPlayers()
+    local enemies = {}
+
+    for _, player in ipairs(self.Players:GetPlayers()) do
+        if player.TeamColor ~= self.player.TeamColor then
+            table.insert(enemies, player)
+        end
+    end
+
+    return enemies
+end
+
+
+function Neuro:LockOn(target)
+    local lockonPos = typeof(target) == "Instance" and target.Character and target.Character:WaitForChild("HumanoidRootPart").Position or target
+    while wait() do
+        if self.pchar and self.HumanoidRootPart and lockonPos then
+            local dir = lockonPos - self.HumanoidRootPart.Position
+            local cf = CFrame.lookAt(Vector3.new(0, 0, 0), dir)
+            self.HumanoidRootPart.CFrame = self.HumanoidRootPart.CFrame:lerp(cf, 0.2)
+        end
+    end
+end
+
+function Neuro:Bhop()
+    local jumpPower = self.Humanoid.JumpPower
+    local isJumping = false
+
+    self.Humanoid.Jumping:Connect(function(isJump)
+        isJumping = isJump
+    end)
+
+    self.inputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.KeyCode == Enum.KeyCode.Space and not gameProcessed then
+            if isJumping then
+                self.Humanoid.Jump = true
+            else
+                self.HumanoidRootPart.Velocity = Vector3.new(0, jumpPower, 0)
+            end
+        end
+    end)
+
+    self.runService.RenderStepped:Connect(function()
+        if self.inputService:IsKeyDown(Enum.KeyCode.Space) and isJumping then
+            self.HumanoidRootPart.Velocity = Vector3.new(self.HumanoidRootPart.Velocity.X, jumpPower, self.HumanoidRootPart.Velocity.Z)
+        end
+    end)
+end
+
+
+function Neuro:Noclip2()
+    self.Noclip = true
+    self.Humanoid:ChangeState(11)
+
+    local char = self.pchar
+    local rootPart = self.HumanoidRootPart
+
+    char.AncestryChanged:Connect(function(_, parent)
+        if parent == nil then
+            char:Destroy()
+            wait(0.1)
+            char = self.Players.LocalPlayer.Character or self.Players.LocalPlayer.CharacterAdded:Wait()
+            rootPart = char:WaitForChild("HumanoidRootPart")
+        end
+    end)
+
+    while self.Noclip do
+        rootPart.CFrame = self.CFrame + self.CFrame.lookVector * 5
+        wait()
+    end
+
+    self.Humanoid:ChangeState(15)
+end
+
+function Neuro:TweenNoclip(targetPosition, duration)
+    local humanoidRootPart = self.pchar.HumanoidRootPart
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    
+    local tween = self.Tween:Create(humanoidRootPart, tweenInfo, {CFrame = targetPosition})
+    tween:Play()
+end
+
+
+function Neuro:KillPlayer()
+    local character = self.player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.Health = 0
+        end
+    end
+end
+
+function Neuro:ServerHop()
+    local TeleportService = game:GetService("TeleportService")
+    local success, errorMessage = pcall(function()
+        local placeId = game.PlaceId
+        local jobId = game.JobId
+        local teleportData = TeleportService:GetTeleportSetting("autoJumpEnabled", placeId, jobId)
+        if teleportData and teleportData.isAutoJumpEnabled then
+            TeleportService:TeleportToPlaceInstance(placeId, teleportData.rootPlaceInstanceId)
+        else
+            TeleportService:TeleportToPlaceInstance(placeId, jobId)
+        end
+    end)
+    if not success then
+        warn("Failed to server hop: " .. errorMessage)
+    end
+end
+
+
+function Neuro:Rejoin()
+    local TeleportService = game:GetService("TeleportService")
+    local success, errorMessage = pcall(function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+    end)
+    if not success then
+        warn("Failed to rejoin: " .. errorMessage)
+    end
+end
 
 
 return Neuro
