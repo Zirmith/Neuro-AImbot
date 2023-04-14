@@ -18,4 +18,5 @@ local neuro = Neuro.new()
 
 
 License
+
 The Neuro module is available under the MIT License. See the LICENSE file for more information.
